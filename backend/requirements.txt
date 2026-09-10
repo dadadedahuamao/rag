@@ -1,0 +1,38 @@
+# Web 框架
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# 数据校验 / 配置
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# 关系库（MySQL）
+SQLAlchemy==2.0.36
+PyMySQL==1.1.1
+cryptography==44.0.0
+
+# 鉴权与安全
+PyJWT==2.10.1
+bcrypt==4.2.1
+
+# 缓存 / 检索引擎
+redis==5.2.1
+elasticsearch==8.17.0
+
+# 异步任务（可选，默认走进程内后台线程执行）
+celery==5.4.0
+
+# 大模型（DeepSeek，OpenAI 兼容协议）
+openai==1.59.6
+httpx==0.28.1
+
+# RAG 流程编排（状态图：路由/分解/自纠错检索/幻觉校验；0.2.x 与 langchain 0.3 生态兼容）
+langgraph==0.2.76
+
+# 文档解析
+pypdf==5.1.0
+python-docx==1.1.2
+markdown==3.7
+beautifulsoup4==4.12.3
+lxml==5.3.0
