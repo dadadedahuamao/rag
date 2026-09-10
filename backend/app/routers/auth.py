@@ -11,7 +11,7 @@ from app.common.response import ApiError, ok
 from app.database import get_db
 from app.deps import get_client_ip, get_current_user
 from app.models import Role, User
-from app.schemas import LoginRequest, RefreshRequest, RegisterRequest
+from app.schemas import LoginRequest, PasswordChangeRequest, RefreshRequest, RegisterRequest
 from app.security import (
     create_access_token,
     create_refresh_token,
@@ -30,8 +30,8 @@ DEFAULT_ROLE = "普通用户"
 def _issue_tokens(user: User) -> dict:
     role_names = [r.name for r in user.roles]
     return {
-        "token": create_access_token(user.id, role_names),
-        "refreshToken": create_refresh_token(user.id),
+        "token": create_access_token(user.id, role_names, user.token_version),
+        "refreshToken": create_refresh_token(user.id, user.token_version),
         "user": user_to_dict(user),
     }
 
@@ -99,8 +99,36 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
     user = db.get(User, int(payload.get("sub", 0)))
     if not user or user.status != "active":
         raise ApiError("用户不可用", code=1, status_code=401)
+    if int(payload.get("ver", 0)) != user.token_version:
+        raise ApiError("登录已失效，请重新登录", code=401, status_code=401)
     role_names = [r.name for r in user.roles]
-    return ok({"token": create_access_token(user.id, role_names)})
+    return ok({"token": create_access_token(user.id, role_names, user.token_version)})
+
+
+@router.put("/password")
+def change_password(
+    body: PasswordChangeRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not verify_password(body.currentPassword, user.password_hash):
+        raise ApiError("当前密码错误", code=1, status_code=400)
+    if verify_password(body.newPassword, user.password_hash):
+        raise ApiError("新密码不能与当前密码相同", code=1, status_code=400)
+
+    user.password_hash = hash_password(body.newPassword)
+    user.token_version += 1
+    db.commit()
+    audit.log(
+        db,
+        user_id=user.id,
+        username=user.username,
+        action="修改密码",
+        resource="auth",
+        ip=get_client_ip(request),
+    )
+    return ok(None, message="密码修改成功，请重新登录")
 
 
 @router.get("/me")

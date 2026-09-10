@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Table, Card, Tag, Button, Modal, Form, Input, Select, App, Typography, Tabs, Checkbox, Tooltip } from 'antd'
 import { EditOutlined, SafetyCertificateOutlined, PlusOutlined } from '@ant-design/icons'
 import PageContainer from '../../components/PageContainer'
-import { adminApi } from '../../api'
+import { adminApi, authApi } from '../../api'
 import { ApiError } from '../../api/http'
+import { getCurrentUser } from '../../api/session'
 import { getPermissionLabel, PERMISSION_GROUPS } from '../../utils/permission'
 import type { User, UserStatus, Role } from '../../types'
 
@@ -17,6 +19,8 @@ const UserRole: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [form] = Form.useForm()
   const { message } = App.useApp()
+  const navigate = useNavigate()
+  const currentUser = getCurrentUser()
 
   // 角色权限编辑状态
   const [permOpen, setPermOpen] = useState(false)
@@ -44,7 +48,14 @@ const UserRole: React.FC = () => {
 
   const editUser = (u: User) => {
     setSelectedUser(u)
-    form.setFieldsValue({ username: u.username, email: u.email, status: u.status, roles: u.roles })
+    form.setFieldsValue({
+      username: u.username,
+      email: u.email,
+      status: u.status,
+      roles: u.roles,
+      newPassword: undefined,
+      confirmPassword: undefined,
+    })
     setEditOpen(true)
   }
 
@@ -52,8 +63,18 @@ const UserRole: React.FC = () => {
     form.validateFields().then(async (values) => {
       if (!selectedUser) return
       try {
-        // 后端仅支持更新状态与角色
-        await adminApi.updateUser(selectedUser.id, { status: values.status, roles: values.roles })
+        const body: { status: UserStatus; roles: string[]; password?: string } = {
+          status: values.status,
+          roles: values.roles,
+        }
+        if (values.newPassword) body.password = values.newPassword
+        await adminApi.updateUser(selectedUser.id, body)
+        if (body.password && selectedUser.id === currentUser?.id) {
+          message.success('密码修改成功，请重新登录')
+          authApi.logout()
+          navigate('/login')
+          return
+        }
         message.success('用户信息已更新')
         setEditOpen(false)
         loadUsers()
@@ -233,6 +254,28 @@ const UserRole: React.FC = () => {
           </Form.Item>
           <Form.Item name="roles" label="角色" rules={[{ required: true, message: '请选择角色' }]}>
             <Select mode="multiple" options={roleList.map((r) => ({ label: r.name, value: r.name }))} />
+          </Form.Item>
+          <Form.Item name="newPassword" label="新密码" rules={[{ min: 6, message: '新密码至少 6 位' }]}>
+            <Input.Password maxLength={72} placeholder="留空则保持当前密码不变" />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="确认新密码"
+            dependencies={['newPassword']}
+            rules={[
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  const password = getFieldValue('newPassword')
+                  if (!password && !value) return Promise.resolve()
+                  if (!value) return Promise.reject(new Error('请再次输入新密码'))
+                  return password === value
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('两次输入的新密码不一致'))
+                },
+              }),
+            ]}
+          >
+            <Input.Password maxLength={72} placeholder="再次输入新密码" />
           </Form.Item>
         </Form>
       </Modal>

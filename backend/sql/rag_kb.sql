@@ -279,6 +279,7 @@ CREATE TABLE `user`  (
   `username` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
   `password_hash` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `token_version` int NOT NULL DEFAULT 0,
   `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
   `last_login` datetime NULL DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -289,14 +290,14 @@ CREATE TABLE `user`  (
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES (1, 'admin', 'admin@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-29 11:33:58', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (2, 'zhangsan', 'zhangsan@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-24 08:42:00', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (3, 'lisi', 'lisi@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-29 11:33:15', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (4, 'wangwu', 'wangwu@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-23 16:10:00', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (5, 'zhaoliu', 'zhaoliu@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'disabled', '2026-06-15 11:00:00', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (6, 'sunqi', 'sunqi@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-24 07:55:00', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (7, 'zhouba', 'zhouba@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-24 10:01:00', '2026-07-24 14:08:58');
-INSERT INTO `user` VALUES (8, 'smoketest', 's@t.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 'active', '2026-07-24 14:10:48', '2026-07-24 14:10:47');
+INSERT INTO `user` VALUES (1, 'admin', 'admin@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-29 11:33:58', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (2, 'zhangsan', 'zhangsan@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-24 08:42:00', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (3, 'lisi', 'lisi@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-29 11:33:15', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (4, 'wangwu', 'wangwu@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-23 16:10:00', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (5, 'zhaoliu', 'zhaoliu@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'disabled', '2026-06-15 11:00:00', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (6, 'sunqi', 'sunqi@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-24 07:55:00', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (7, 'zhouba', 'zhouba@company.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-24 10:01:00', '2026-07-24 14:08:58');
+INSERT INTO `user` VALUES (8, 'smoketest', 's@t.com', '$2b$12$8UkAvPNQrYLfIQZgY4Uro.qqQ360tvfoHs9dC4uJFuIIbPYlKMLfm', 0, 'active', '2026-07-24 14:10:48', '2026-07-24 14:10:47');
 
 -- ----------------------------
 -- Table structure for user_role

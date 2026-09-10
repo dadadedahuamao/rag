@@ -34,6 +34,9 @@ export const authApi = {
     setSession(data.token, data.refreshToken, data.user)
     return data.user
   },
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await http.put<null>('/auth/password', { currentPassword, newPassword })
+  },
   async me(): Promise<SessionUser> {
     const user = await http.get<SessionUser>('/auth/me')
     setCurrentUser(user)
@@ -97,7 +100,7 @@ export const adminApi = {
   listUsers: () => http.get<User[]>('/admin/users'),
   createUser: (body: { username: string; email?: string; password: string; roles?: string[] }) =>
     http.post<User>('/admin/users', body),
-  updateUser: (id: number, body: { status?: string; roles?: string[] }) =>
+  updateUser: (id: number, body: { status?: string; roles?: string[]; password?: string }) =>
     http.put<User>(`/admin/users/${id}`, body),
   listRoles: () => http.get<Role[]>('/admin/roles'),
   createRole: (body: { name: string; description?: string; permissions?: string[] }) =>

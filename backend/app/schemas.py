@@ -1,7 +1,7 @@
 """请求体 Pydantic 模型。字段采用 camelCase 以对齐前端 TypeScript 类型。"""
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class LoginRequest(BaseModel):
@@ -17,6 +17,22 @@ class RegisterRequest(BaseModel):
 
 class RefreshRequest(BaseModel):
     refreshToken: str
+
+
+def _validate_bcrypt_password(value: str) -> str:
+    if len(value.encode("utf-8")) > 72:
+        raise ValueError("密码不能超过 72 个 UTF-8 字节")
+    return value
+
+
+class PasswordChangeRequest(BaseModel):
+    currentPassword: str = Field(min_length=1, max_length=128)
+    newPassword: str = Field(min_length=6)
+
+    @field_validator("newPassword")
+    @classmethod
+    def validate_new_password(cls, value: str) -> str:
+        return _validate_bcrypt_password(value)
 
 
 class KbCreate(BaseModel):
@@ -51,6 +67,12 @@ class RoleUpsert(BaseModel):
 class UserUpdate(BaseModel):
     status: str | None = None
     roles: list[str] | None = None
+    password: str | None = Field(default=None, min_length=6)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str | None) -> str | None:
+        return _validate_bcrypt_password(value) if value is not None else None
 
 
 class UserCreate(BaseModel):

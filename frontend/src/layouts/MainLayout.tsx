@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Dropdown, Space, Typography, Button } from 'antd'
+import { Layout, Menu, Dropdown, Space, Typography, Button, Modal, Form, Input, App } from 'antd'
 import {
   DashboardOutlined,
   BookOutlined,
@@ -14,6 +14,7 @@ import {
   ControlOutlined,
   ScheduleOutlined,
   LogoutOutlined,
+  LockOutlined,
   DatabaseOutlined,
 } from '@ant-design/icons'
 import { getCurrentUser } from '../api/session'
@@ -63,6 +64,10 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const user = getCurrentUser()
+  const [passwordOpen, setPasswordOpen] = useState(false)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordForm] = Form.useForm()
+  const { message } = App.useApp()
 
   const menuItems = filterMenu(allMenuItems)
   const selectedKey = '/' + location.pathname.split('/').filter(Boolean).join('/')
@@ -72,14 +77,42 @@ const MainLayout: React.FC = () => {
   const userMenuItems = [
     { key: 'profile', icon: <UserOutlined />, label: user ? `${user.username} | ${user.roles.join(', ')}` : '未登录' },
     { type: 'divider' as const },
+    { key: 'change-password', icon: <LockOutlined />, label: '修改密码' },
     { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', danger: true },
   ]
 
   const handleUserMenuClick = ({ key }: { key: string }) => {
+    if (key === 'change-password') {
+      setPasswordOpen(true)
+      return
+    }
     if (key === 'logout') {
       authApi.logout()
       navigate('/login')
     }
+  }
+
+  const handleChangePassword = async () => {
+    const values = await passwordForm.validateFields()
+    try {
+      setPasswordSaving(true)
+      await authApi.changePassword(values.currentPassword, values.newPassword)
+      message.success('密码修改成功，请重新登录')
+      passwordForm.resetFields()
+      setPasswordOpen(false)
+      authApi.logout()
+      navigate('/login')
+    } catch (e) {
+      message.error((e as Error).message || '密码修改失败')
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
+  const closePasswordModal = () => {
+    if (passwordSaving) return
+    passwordForm.resetFields()
+    setPasswordOpen(false)
   }
 
   return (
@@ -150,6 +183,45 @@ const MainLayout: React.FC = () => {
       <Content style={{ padding: 24, background: 'transparent' }}>
         <Outlet />
       </Content>
+      <Modal
+        title="修改密码"
+        open={passwordOpen}
+        onOk={handleChangePassword}
+        onCancel={closePasswordModal}
+        confirmLoading={passwordSaving}
+        okText="保存"
+        cancelText="取消"
+        destroyOnClose
+      >
+        <Form form={passwordForm} layout="vertical">
+          <Form.Item name="currentPassword" label="当前密码" rules={[{ required: true, message: '请输入当前密码' }]}>
+            <Input.Password placeholder="请输入当前密码" />
+          </Form.Item>
+          <Form.Item name="newPassword" label="新密码" rules={[{ required: true, min: 6, message: '新密码至少 6 位' }]}>
+            <Input.Password maxLength={72} placeholder="请输入新密码" />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="确认新密码"
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: '请再次输入新密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  return !value || getFieldValue('newPassword') === value
+                    ? Promise.resolve()
+                    : Promise.reject(new Error('两次输入的新密码不一致'))
+                },
+              }),
+            ]}
+          >
+            <Input.Password maxLength={72} placeholder="请再次输入新密码" />
+          </Form.Item>
+          <div style={{ color: '#52718b', fontSize: 12, lineHeight: 1.55, background: '#eff8ff', borderRadius: 8, padding: '10px 12px' }}>
+            密码修改成功后，当前账号将退出登录，请使用新密码重新登录。
+          </div>
+        </Form>
+      </Modal>
     </Layout>
   )
 }

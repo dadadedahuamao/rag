@@ -41,6 +41,8 @@ def get_current_user(
     user = db.get(User, user_id)
     if not user:
         raise ApiError("用户不存在", code=401, status_code=401)
+    if int(payload.get("ver", 0)) != user.token_version:
+        raise ApiError("登录已失效，请重新登录", code=401, status_code=401)
     if user.status != "active":
         raise ApiError("该账号已被禁用", code=403, status_code=403)
     return user

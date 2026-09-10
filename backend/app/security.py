@@ -35,18 +35,18 @@ def _create_token(subject: str, extra: dict[str, Any], expires_delta: timedelta)
     return jwt.encode(payload, settings.app_secret_key, algorithm=ALGORITHM)
 
 
-def create_access_token(user_id: int, roles: list[str]) -> str:
+def create_access_token(user_id: int, roles: list[str], token_version: int) -> str:
     return _create_token(
         str(user_id),
-        {"roles": roles, "type": "access"},
+        {"roles": roles, "type": "access", "ver": token_version},
         timedelta(minutes=settings.access_token_expire_minutes),
     )
 
 
-def create_refresh_token(user_id: int) -> str:
+def create_refresh_token(user_id: int, token_version: int) -> str:
     return _create_token(
         str(user_id),
-        {"type": "refresh"},
+        {"type": "refresh", "ver": token_version},
         timedelta(days=settings.refresh_token_expire_days),
     )
 

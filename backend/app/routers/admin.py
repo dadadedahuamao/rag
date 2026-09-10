@@ -63,6 +63,7 @@ def create_user(
 def update_user(
     user_id: int,
     body: UserUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("admin")),
 ):
@@ -73,8 +74,21 @@ def update_user(
         target.status = body.status
     if body.roles is not None:
         target.roles = db.query(Role).filter(Role.name.in_(body.roles)).all()
+    password_changed = body.password is not None
+    if password_changed:
+        target.password_hash = hash_password(body.password)
+        target.token_version += 1
     db.commit()
     db.refresh(target)
+    if password_changed:
+        audit.log(
+            db,
+            user_id=user.id,
+            username=user.username,
+            action="重置用户密码",
+            resource=f"user:{target.id}",
+            ip=get_client_ip(request),
+        )
     return ok(user_to_dict(target), message="用户已更新")
 
 
