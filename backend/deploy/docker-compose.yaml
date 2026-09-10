@@ -1,5 +1,6 @@
 services:
   backend:
+    container_name: rag-backend
     build:
       context: ..
       dockerfile: deploy/Dockerfile
