@@ -4,6 +4,9 @@
 .DS_Store
 Thumbs.db
 
+# 一键部署脚本
+deploy.sh
+
 # AI Agent产物
 docs
 
